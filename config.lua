@@ -1,12 +1,13 @@
 local kConfig = {
     -- 是否开启日志
+    -- 关闭日志，仅仅是日志不保存到文件，但仍然在终端输出
     kAllowLog = true,
 
     -- 日志文件数量
-    kMaxLogFileCount = 10,
+    kMaxLogFileCount = 20,
 
-    -- 日志数量
-    kMaxLogLength = 10,
+    -- 每个日志文件的日志数量
+    kMaxLogLength = 1000,
 
     -- 外部电池容量充满时，待机时长（秒）
     kWaitTime = 1800,

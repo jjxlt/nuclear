@@ -3,7 +3,7 @@ local kLog = require("log")
 local function main()
     print("程序开始")
     kLog.init()
-    for i = 1, 200 do
+    for i = 1, 2000000 do
         kLog.p("日志 " .. i .. " 打印")
     end
     kLog.dispose()

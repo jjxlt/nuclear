@@ -10,6 +10,8 @@ local kFilePath = "debug_log"
 -- 文件名种子，保证生成的文件名不会重复
 local kFileNameSeed
 
+local kLog = {}
+
 -- 是否是生产环境(openOS)
 local function isPro()
     local handle = io.popen("uname")
@@ -19,11 +21,73 @@ local function isPro()
     return result ~= "Darwin"
 end
 
+local function fileNamesInDirOpenOS(directory)
+    error("未实现 \"fileNamesInDirOpenOS方法\" ")
+end
+
+local function fileNamesInDirMacOS(directory)
+    local handle = io.popen('ls -1 "'..directory..'" 2>/dev/null')
+    local files = {}
+    if handle then
+        for line in handle:lines() do
+            table.insert(files, line)
+        end
+        handle:close()
+    end
+    return files
+end
+
+-- 获取目录中所有文件夹名字
+local function fileNamesInDir(directory)
+    if isPro() then
+        return fileNamesInDirOpenOS(directory)
+    else
+        return fileNamesInDirMacOS(directory)
+    end
+end
+
+-- 删除最早的日志文件
+local function deleteOldestFile()
+    local fileNames = fileNamesInDir(kFilePath)
+    local needDeleteCount = #fileNames - kConfig.kMaxLogFileCount
+    local needDeleteFiles = {}
+    -- 找到需要删除的日志文件
+    for i = 1, #fileNames do
+        local time, seed = fileNames[i]:match("_(%d+)_([%d]+)%.log")
+        local item = {
+            time = tonumber(time),
+            seed = tonumber(seed),
+            fileName = fileNames[i]
+        }
+        if #needDeleteFiles < needDeleteCount then
+            table.insert(needDeleteFiles, item)
+        else
+            local tItem = item
+            for j = 1, #needDeleteFiles do
+                if tItem.time < needDeleteFiles[j].time then
+                    local pItem = tItem
+                    tItem = needDeleteFiles[j]
+                    needDeleteFiles[j] = pItem
+                elseif tItem.time == needDeleteFiles[j].time and tItem.seed < needDeleteFiles[j].seed then
+                    local pItem = tItem
+                    tItem = needDeleteFiles[j]
+                    needDeleteFiles[j] = pItem
+                end
+            end
+        end
+    end
+
+    -- 删除之
+    for i = 1, #needDeleteFiles do
+        local ok = os.remove(string.format("%s/%s", kFilePath, needDeleteFiles[i].fileName))
+        if not ok then
+            error("删除文件出错")
+        end
+    end
+end
 -------------------------------- private --------------------------------
 
 -------------------------------- public --------------------------------
-local kLog = {}
-
 -- 初始化
 function kLog.init()
     if not kConfig.kAllowLog then
@@ -81,6 +145,8 @@ function kLog.writeToFile()
     end
     file:close()
     kLogData = {}
+
+    deleteOldestFile()
 end
 
 -- OpenComputer中的openOS文件系统API与通用的windows或unix不大相同，具体API见：
