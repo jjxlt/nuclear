@@ -92,7 +92,7 @@ local function main()
             break
         end
 
-        if kControlRedstoneIO.getInput(kAutoControl) >= 10 then
+        if kControlRedstoneIO.getInput(kAutoControl) >= kConfig.kMaxRedSignal then
             closeAllNuclear()
             kLog.p(string.format("电池电量库存已满，进入待机，待机时长%s秒", tostring(kConfig.kWaitTime)))
             os.sleep(kConfig.kWaitTime)
